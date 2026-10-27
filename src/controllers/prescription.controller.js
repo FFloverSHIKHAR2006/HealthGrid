@@ -1,0 +1,18 @@
+import Prescription from '../models/Prescription.js';
+import Patient from '../models/Patient.js';
+import { asyncHandler, HttpError } from '../utils/asyncHandler.js';
+import { logAudit } from '../services/audit.service.js';
+
+// FR-04 (providers only)
+export const createPrescription = asyncHandler(async (req, res) => {
+  if (!(await Patient.exists({ _id: req.body.patient }))) throw new HttpError(404, 'Patient not found');
+
+  const rx = await Prescription.create({ ...req.body, provider: req.user._id });
+  await logAudit(req, {
+    action: 'CREATE',
+    entity: 'Prescription',
+    entityId: rx._id,
+    details: `${rx.medication} ${rx.dosage}`,
+  });
+  res.status(201).json(rx);
+});
