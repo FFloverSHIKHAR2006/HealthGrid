@@ -15,7 +15,8 @@
     "seed": "node src/seed/seed.js",
     "test": "node tests/test-medical-pipeline.js",
     "test:api": "node tests/test-all.js",
-    "test:all": "node tests/test-medical-pipeline.js && node tests/test-all.js"
+    "test:reminders": "node tests/test-reminders.js",
+    "test:all": "node tests/test-medical-pipeline.js && node tests/test-all.js && node tests/test-reminders.js"
   },
   "engines": {
     "node": ">=18"
