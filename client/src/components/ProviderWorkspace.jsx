@@ -36,6 +36,8 @@ export default function ProviderWorkspace({
   onSimulateABDMRetrieval,
   onOpenScanner,
   onOpenAddRecord,
+  onOpenAddReminder,
+  onDeleteReminder,
 }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('dossier'); // 'dossier' | 'prescription' | 'abdm'
@@ -54,6 +56,8 @@ export default function ProviderWorkspace({
   const records = selectedVault?.records || [];
   const prescriptions = selectedVault?.prescriptions || [];
   const routines = selectedVault?.routines || [];
+  const reminders = selectedVault?.reminders || [];
+  const appointmentReminders = reminders.filter((r) => r.type === 'appointment');
 
   const filteredPatients = caseload.filter((p) => {
     if (!searchTerm) return true;
@@ -444,6 +448,81 @@ export default function ProviderWorkspace({
                 <span className="vital-status-pill optimal">Optimal</span>
               </div>
             </div>
+          </div>
+
+          {/* Active Appointments & Clinical Reminders Strip */}
+          <div className="dossier-card" style={{ marginTop: '16px', padding: '18px 24px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Calendar size={18} color="#3b82f6" />
+                <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: '#f4f4f5' }}>
+                  Scheduled Consultations & Follow-Ups ({appointmentReminders.length})
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => onOpenAddReminder && onOpenAddReminder('appointment')}
+                style={{
+                  background: 'rgba(59, 130, 246, 0.15)',
+                  color: '#60a5fa',
+                  border: '1px solid rgba(59, 130, 246, 0.3)',
+                  borderRadius: '6px',
+                  padding: '5px 12px',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                <Plus size={14} /> Schedule Follow-Up Visit
+              </button>
+            </div>
+
+            {appointmentReminders.length === 0 ? (
+              <p style={{ margin: 0, fontSize: '13px', color: '#71717a' }}>
+                No follow-up consultations currently scheduled for {selectedPatient?.name || 'this patient'}.
+              </p>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '12px' }}>
+                {appointmentReminders.map((app) => (
+                  <div
+                    key={app._id}
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.03)',
+                      border: '1px solid #27272a',
+                      borderRadius: '8px',
+                      padding: '12px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '6px',
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <span style={{ fontWeight: 600, fontSize: '13px', color: '#fff' }}>{app.title}</span>
+                      {onDeleteReminder && (
+                        <button
+                          type="button"
+                          onClick={() => onDeleteReminder(app._id)}
+                          style={{ background: 'transparent', border: 'none', color: '#71717a', cursor: 'pointer' }}
+                          title="Cancel appointment"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      )}
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#60a5fa' }}>
+                      <Clock size={12} />
+                      <span>{app.appointmentDate ? new Date(app.appointmentDate).toLocaleDateString() : ''} at {app.appointmentTime || 'Scheduled'}</span>
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#a1a1aa' }}>
+                      {app.facility || 'Clinical Facility'} {app.location ? `• ${app.location}` : ''}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* BOTTOM PANEL: Redesigned Digital E-Prescription Module (FR-04) */}

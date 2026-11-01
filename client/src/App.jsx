@@ -438,6 +438,11 @@ export default function App() {
               onSimulateABDMRetrieval={handleSimulateABDM}
               onOpenScanner={() => setShowScannerModal(true)}
               onOpenAddRecord={() => setShowAddRecordModal(true)}
+              onOpenAddReminder={(type) => {
+                setReminderModalType(type || 'appointment');
+                setShowAddReminderModal(true);
+              }}
+              onDeleteReminder={handleDeleteReminder}
             />
           )}
 
