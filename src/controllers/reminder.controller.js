@@ -2,6 +2,7 @@ import Reminder from '../models/Reminder.js';
 import Patient from '../models/Patient.js';
 import Prescription from '../models/Prescription.js';
 import { scheduleRemindersForPrescription } from '../services/prescriptionScheduler.service.js';
+import { checkDueReminders } from '../services/reminderScheduler.service.js';
 import { asyncHandler, HttpError } from '../utils/asyncHandler.js';
 import { canAccessPatient } from '../middleware/auth.js';
 import { logAudit } from '../services/audit.service.js';
@@ -155,4 +156,13 @@ export const createRemindersFromPrescription = asyncHandler(async (req, res) => 
   });
 
   res.status(201).json(result);
+});
+
+// Trigger immediate scheduler check
+export const triggerSchedulerCheck = asyncHandler(async (req, res) => {
+  const result = await checkDueReminders();
+  res.json({
+    message: 'Reminder scheduler check executed',
+    ...result,
+  });
 });

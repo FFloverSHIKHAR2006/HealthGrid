@@ -7,6 +7,7 @@ import {
   deleteReminder,
   recordAdherence,
   createRemindersFromPrescription,
+  triggerSchedulerCheck,
 } from '../controllers/reminder.controller.js';
 import { authenticate } from '../middleware/auth.js';
 import { validate, idParam, objectId } from '../middleware/validate.js';
@@ -80,5 +81,6 @@ router.post(
   validate({ params: z.object({ prescriptionId: objectId }) }),
   createRemindersFromPrescription
 );
+router.post('/trigger-check', triggerSchedulerCheck);
 
 export default router;
