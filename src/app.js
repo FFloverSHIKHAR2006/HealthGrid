@@ -13,6 +13,7 @@ import recordRoutes from './routes/record.routes.js';
 import prescriptionRoutes from './routes/prescription.routes.js';
 import routineRoutes from './routes/routine.routes.js';
 import reminderRoutes from './routes/reminder.routes.js';
+import notificationRoutes from './routes/notification.routes.js';
 import auditRoutes from './routes/audit.routes.js';
 import { notFound, errorHandler } from './middleware/errorHandler.js';
 import { getDatabaseHealth } from './config/db.js';
@@ -67,6 +68,7 @@ app.use('/api/records', recordRoutes);
 app.use('/api/prescriptions', prescriptionRoutes);
 app.use('/api/routines', routineRoutes);
 app.use('/api/reminders', reminderRoutes);
+app.use('/api/notifications', notificationRoutes);
 app.use('/api/audit-logs', auditRoutes);
 
 // Serve frontend static files (Vite React client dist)

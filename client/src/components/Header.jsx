@@ -8,6 +8,7 @@ import {
   Fingerprint,
 } from 'lucide-react';
 import ShimmerButton from './ShimmerButton';
+import NotificationCenter from './NotificationCenter';
 
 export default function Header({ user, onLogout, onTriggerEmergency, onReturnHome }) {
   const isDoctor = user?.role === 'provider';
@@ -71,6 +72,9 @@ export default function Header({ user, onLogout, onTriggerEmergency, onReturnHom
           >
             108 SOS EMERGENCY
           </ShimmerButton>
+
+          {/* Clinical Notification Center */}
+          {user && <NotificationCenter />}
 
           {/* User Session Profile */}
           {user && (

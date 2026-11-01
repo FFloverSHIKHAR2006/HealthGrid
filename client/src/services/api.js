@@ -109,6 +109,12 @@ export const api = {
     request(`/reminders/from-prescription/${prescriptionId}`, { method: 'POST' }),
   triggerReminderCheck: () => request('/reminders/trigger-check', { method: 'POST' }),
 
+  // Notifications
+  getNotifications: () => request('/notifications'),
+  markNotificationRead: (id) => request(`/notifications/${id}/read`, { method: 'PUT' }),
+  markAllNotificationsRead: () => request('/notifications/read-all', { method: 'PUT' }),
+  deleteNotification: (id) => request(`/notifications/${id}`, { method: 'DELETE' }),
+
   // Audit
   getAuditLogs: (page = 1, limit = 50) => {
     const p = typeof page === 'object' ? page.page || 1 : page;
