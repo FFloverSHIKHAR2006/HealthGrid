@@ -71,15 +71,18 @@ app.use('/api/reminders', reminderRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/audit-logs', auditRoutes);
 
-// Serve frontend static files (Vite React client dist)
-const clientDistPath = path.join(__dirname, '../client/dist');
-if (fs.existsSync(clientDistPath)) {
-  app.use(express.static(clientDistPath));
+// Serve frontend static files (Vite React frontend dist)
+const frontendDistPath = fs.existsSync(path.join(__dirname, '../frontend/dist'))
+  ? path.join(__dirname, '../frontend/dist')
+  : path.join(__dirname, '../client/dist');
+
+if (fs.existsSync(frontendDistPath)) {
+  app.use(express.static(frontendDistPath));
 }
 
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api')) return next();
-  const indexPath = path.join(clientDistPath, 'index.html');
+  const indexPath = path.join(frontendDistPath, 'index.html');
   if (fs.existsSync(indexPath)) {
     return res.sendFile(indexPath);
   }

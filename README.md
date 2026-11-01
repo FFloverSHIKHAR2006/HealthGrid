@@ -205,8 +205,8 @@ MICROSOFT_TENANT_ID=common
 # In the repository root:
 npm install
 
-# In the client folder:
-npm --prefix client install
+# In the frontend folder:
+npm --prefix frontend install
 ```
 
 ### 2. Seed the Demonstration Database
@@ -224,11 +224,11 @@ This concurrently starts:
 - **Vite React Frontend**: `http://localhost:5173` (with instant Hot Module Replacement)
 
 ### 4. Build the Production Frontend
-Compiles modern React components, assets, and styles into `client/dist/`:
+Compiles modern React components, assets, and styles into `frontend/dist/`:
 ```bash
 npm run build
 # OR
-npm run client:build
+npm run frontend:build
 ```
 
 ### 5. Start Full-Stack Production Server

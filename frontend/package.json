@@ -1,5 +1,5 @@
 {
-  "name": "healthgrid-client",
+  "name": "healthgrid-frontend",
   "private": true,
   "version": "1.0.0",
   "type": "module",
