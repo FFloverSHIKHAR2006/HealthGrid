@@ -4,7 +4,8 @@
 > Built with **React 18 + Vite** (Frontend), **Node.js + Express** (Backend), **MongoDB + Mongoose** (Database), and a **Cryptographic SHA-256 Audit Ledger**.
 
 Reference Deployed Design: [https://taru30174.github.io/healthgrid/](https://taru30174.github.io/healthgrid/)  
-Requirements Audit & Traceability Matrix: [docs/requirements-audit.md](docs/requirements-audit.md)
+Requirements Audit & Traceability Matrix: [docs/requirements-audit.md](docs/requirements-audit.md)  
+Medication & Appointment Reminders Architecture: [docs/reminders-feature.md](docs/reminders-feature.md)
 
 ---
 
@@ -396,6 +397,17 @@ All protected endpoints require the HTTP Authorization header:
 | `POST` | `/api/routines` | Authenticated | Schedule patient wellness or medication routine |
 | `PUT` | `/api/routines/:id` | Authenticated | Toggle routine status (`active` $\leftrightarrow$ `completed`) |
 | `DELETE` | `/api/routines/:id` | Authenticated | Remove routine from patient vault |
+| `GET` | `/api/reminders` | Authenticated | List medication and appointment reminders |
+| `POST` | `/api/reminders` | Authenticated | Create medication reminder or doctor appointment alert |
+| `PUT` | `/api/reminders/:id` | Authenticated | Update reminder schedule, dosage, or notes |
+| `DELETE` | `/api/reminders/:id` | Authenticated | Remove reminder from patient vault |
+| `POST` | `/api/reminders/:id/adherence` | Authenticated | Record dose adherence (`taken` or `skipped`) |
+| `POST` | `/api/reminders/from-prescription/:id` | Authenticated | Auto-generate reminder schedule from prescription |
+| `POST` | `/api/reminders/trigger-check` | Authenticated | Manually execute background scheduler check cycle |
+| `GET` | `/api/notifications` | Authenticated | Retrieve in-app notifications and unread badge count |
+| `PUT` | `/api/notifications/:id/read` | Authenticated | Mark single notification as read |
+| `PUT` | `/api/notifications/read-all` | Authenticated | Mark all notifications as read |
+| `DELETE` | `/api/notifications/:id` | Authenticated | Dismiss or delete notification |
 | `GET` | `/api/audit-logs` | Doctor Only | Inspect paginated cryptographic audit trail |
 | `GET` | `/api/audit-logs/verify` | Doctor / Auditor | Recompute full SHA-256 hash chain from GENESIS to present |
 
