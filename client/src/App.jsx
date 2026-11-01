@@ -13,6 +13,7 @@ import AddRoutineModal from './components/modals/AddRoutineModal';
 import AddRecordModal from './components/modals/AddRecordModal';
 import ScannerModal from './components/modals/ScannerModal';
 import EmergencyModal from './components/modals/EmergencyModal';
+import AddReminderModal from './components/modals/AddReminderModal';
 
 import { api, setToken, removeToken, getToken, getStoredUser, setStoredUser } from './services/api';
 import { Loader2 } from 'lucide-react';
@@ -34,6 +35,8 @@ export default function App() {
   const [showAddRecordModal, setShowAddRecordModal] = useState(false);
   const [showScannerModal, setShowScannerModal] = useState(false);
   const [showEmergencyModal, setShowEmergencyModal] = useState(false);
+  const [showAddReminderModal, setShowAddReminderModal] = useState(false);
+  const [reminderModalType, setReminderModalType] = useState('medication');
 
   // Toast dispatcher
   const showToast = (message, type = 'info') => {
@@ -201,6 +204,93 @@ export default function App() {
     showToast('Health routine scheduled (FR-05)', 'success');
   };
 
+  // Add reminder (Medication & Appointment)
+  const handleAddReminder = async (data) => {
+    const res = await api.createReminder(data);
+    if (patientVault) {
+      setPatientVault((prev) => ({
+        ...prev,
+        reminders: [res, ...(prev.reminders || [])],
+      }));
+    }
+    if (selectedDoctorVault) {
+      setSelectedDoctorVault((prev) => ({
+        ...prev,
+        reminders: [res, ...(prev.reminders || [])],
+      }));
+    }
+    showToast(
+      res.type === 'medication'
+        ? 'Medication reminder scheduled'
+        : 'Doctor appointment reminder saved',
+      'success'
+    );
+  };
+
+  // Record medication adherence
+  const handleRecordAdherence = async (reminderId, status, note = '') => {
+    try {
+      const res = await api.recordAdherence(reminderId, status, note);
+      if (patientVault) {
+        setPatientVault((prev) => ({
+          ...prev,
+          reminders: (prev.reminders || []).map((r) =>
+            r._id === reminderId ? res.reminder : r
+          ),
+        }));
+      }
+      showToast(
+        status === 'taken'
+          ? 'Medication dose marked as taken'
+          : 'Medication dose marked as skipped',
+        'info'
+      );
+    } catch (err) {
+      showToast('Failed to record adherence: ' + err.message, 'error');
+    }
+  };
+
+  // Delete reminder
+  const handleDeleteReminder = async (reminderId) => {
+    try {
+      await api.deleteReminder(reminderId);
+      if (patientVault) {
+        setPatientVault((prev) => ({
+          ...prev,
+          reminders: (prev.reminders || []).filter((r) => r._id !== reminderId),
+        }));
+      }
+      if (selectedDoctorVault) {
+        setSelectedDoctorVault((prev) => ({
+          ...prev,
+          reminders: (prev.reminders || []).filter((r) => r._id !== reminderId),
+        }));
+      }
+      showToast('Reminder deleted successfully', 'success');
+    } catch (err) {
+      showToast('Failed to delete reminder: ' + err.message, 'error');
+    }
+  };
+
+  // Auto-schedule reminders from prescription
+  const handleAutoSchedulePrescription = async (prescriptionId) => {
+    try {
+      const res = await api.createFromPrescription(prescriptionId);
+      if (patientVault) {
+        setPatientVault((prev) => ({
+          ...prev,
+          reminders: [...(res.reminders || []), ...(prev.reminders || [])],
+        }));
+      }
+      showToast(
+        res.message || 'Prescription reminders auto-scheduled successfully',
+        'success'
+      );
+    } catch (err) {
+      showToast('Failed to auto-schedule reminders: ' + err.message, 'error');
+    }
+  };
+
   // Add record (FR-03)
   const handleAddRecord = async (data) => {
     const res = await api.createRecord(data);
@@ -320,6 +410,13 @@ export default function App() {
                 onToggleRoutine={handleToggleRoutine}
                 onDeleteRoutine={handleDeleteRoutine}
                 onTriggerEmergency={() => setShowEmergencyModal(true)}
+                onOpenAddReminder={(type) => {
+                  setReminderModalType(type || 'medication');
+                  setShowAddReminderModal(true);
+                }}
+                onRecordAdherence={handleRecordAdherence}
+                onDeleteReminder={handleDeleteReminder}
+                onAutoSchedulePrescription={handleAutoSchedulePrescription}
               />
             ) : (
               <div className="vault-loading-container">
@@ -389,6 +486,15 @@ export default function App() {
         <EmergencyModal
           patient={patientVault?.patient || selectedDoctorVault?.patient}
           onClose={() => setShowEmergencyModal(false)}
+        />
+      )}
+
+      {showAddReminderModal && (
+        <AddReminderModal
+          defaultType={reminderModalType}
+          patientId={user?.role === 'provider' ? selectedDoctorPatientId : patientVault?.patient?._id}
+          onClose={() => setShowAddReminderModal(false)}
+          onSave={handleAddReminder}
         />
       )}
 

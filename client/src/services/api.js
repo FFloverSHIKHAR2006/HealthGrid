@@ -95,6 +95,20 @@ export const api = {
   updateRoutine: (id, data) => request(`/routines/${id}`, { method: 'PUT', body: data }),
   deleteRoutine: (id) => request(`/routines/${id}`, { method: 'DELETE' }),
 
+  // Reminders (Medication & Appointments)
+  getReminders: (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    return request(`/reminders${query ? `?${query}` : ''}`);
+  },
+  createReminder: (data) => request('/reminders', { method: 'POST', body: data }),
+  updateReminder: (id, data) => request(`/reminders/${id}`, { method: 'PUT', body: data }),
+  deleteReminder: (id) => request(`/reminders/${id}`, { method: 'DELETE' }),
+  recordAdherence: (id, status, note, scheduledTime) =>
+    request(`/reminders/${id}/adherence`, { method: 'POST', body: { status, note, scheduledTime } }),
+  createFromPrescription: (prescriptionId) =>
+    request(`/reminders/from-prescription/${prescriptionId}`, { method: 'POST' }),
+  triggerReminderCheck: () => request('/reminders/trigger-check', { method: 'POST' }),
+
   // Audit
   getAuditLogs: (page = 1, limit = 50) => {
     const p = typeof page === 'object' ? page.page || 1 : page;

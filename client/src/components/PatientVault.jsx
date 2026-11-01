@@ -40,6 +40,10 @@ export default function PatientVault({
   onToggleRoutine,
   onDeleteRoutine,
   onTriggerEmergency,
+  onOpenAddReminder,
+  onRecordAdherence,
+  onDeleteReminder,
+  onAutoSchedulePrescription,
 }) {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [copiedHash, setCopiedHash] = useState(null);
@@ -51,6 +55,9 @@ export default function PatientVault({
   const records = localRecords.length > 0 ? localRecords : vault?.records || vault?.medicalRecords || [];
   const routines = vault?.routines || [];
   const prescriptions = vault?.prescriptions || [];
+  const reminders = vault?.reminders || [];
+  const medicationReminders = reminders.filter((r) => r.type === 'medication');
+  const appointmentReminders = reminders.filter((r) => r.type === 'appointment');
   const telemetry = patient?.telemetry || {
     heartRate: 72,
     bloodPressure: { systolic: 118, diastolic: 78 },
@@ -526,7 +533,32 @@ export default function PatientVault({
                   <p className="rx-instructions">{rx.instructions}</p>
                   <div className="rx-footer-line">
                     <span>{rx.doctor?.name || rx.doctor || 'Dr. Alexander Wright, MD'}</span>
-                    <span className="rx-verified-tag">Auto-Refill On</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span className="rx-verified-tag">Auto-Refill On</span>
+                      {onAutoSchedulePrescription && rx._id && (
+                        <button
+                          type="button"
+                          onClick={() => onAutoSchedulePrescription(rx._id)}
+                          style={{
+                            background: 'rgba(16, 185, 129, 0.12)',
+                            color: '#10b981',
+                            border: '1px solid rgba(16, 185, 129, 0.3)',
+                            borderRadius: '4px',
+                            padding: '2px 8px',
+                            fontSize: '10px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                          }}
+                          title="Generate automated medication reminder schedule"
+                        >
+                          <Clock size={10} />
+                          Auto-Schedule
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -591,6 +623,292 @@ export default function PatientVault({
                       >
                         <Trash2 size={14} />
                       </button>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+
+          {/* Medication Reminders & Adherence Card */}
+          <div className="routines-checklist-card" style={{ marginTop: '20px' }}>
+            <div className="routines-header">
+              <div className="routines-title-group">
+                <div className="routines-icon-box" style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
+                  <Pill size={18} />
+                </div>
+                <div>
+                  <h2 className="routines-heading">Medication Reminders</h2>
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                    Daily Dose Adherence
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="add-routine-btn"
+                onClick={() => onOpenAddReminder && onOpenAddReminder('medication')}
+                title="Schedule new medication reminder"
+              >
+                <Plus size={15} />
+                <span>Add</span>
+              </button>
+            </div>
+
+            <div className="routines-list" style={{ marginTop: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {medicationReminders.length === 0 ? (
+                <p className="no-routines-msg">No active medication reminders scheduled yet.</p>
+              ) : (
+                medicationReminders.map((rem) => {
+                  const todayStr = new Date().toISOString().split('T')[0];
+                  const todayAdherence = rem.adherenceHistory?.find(
+                    (a) => new Date(a.timestamp).toISOString().split('T')[0] === todayStr
+                  );
+                  const isTakenToday = todayAdherence?.status === 'taken';
+                  const isSkippedToday = todayAdherence?.status === 'skipped';
+                  const totalTaken = rem.adherenceHistory?.filter((a) => a.status === 'taken').length || 0;
+
+                  return (
+                    <div
+                      key={rem._id}
+                      style={{
+                        padding: '12px',
+                        background: 'rgba(255, 255, 255, 0.02)',
+                        border: '1px solid var(--border-light, #27272a)',
+                        borderRadius: '8px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '8px',
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ fontWeight: 600, fontSize: '13px', color: 'var(--text-main, #fff)' }}>
+                              {rem.title}
+                            </span>
+                            {rem.dosage && (
+                              <span
+                                style={{
+                                  fontSize: '10px',
+                                  padding: '1px 6px',
+                                  background: 'rgba(16, 185, 129, 0.15)',
+                                  color: '#10b981',
+                                  borderRadius: '4px',
+                                  fontWeight: 600,
+                                }}
+                              >
+                                {rem.dosage}
+                              </span>
+                            )}
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                            <Clock size={12} />
+                            <span>{rem.time || 'Scheduled'} • {rem.frequency || 'Daily'}</span>
+                          </div>
+                        </div>
+
+                        {onDeleteReminder && (
+                          <button
+                            type="button"
+                            className="routine-delete-btn"
+                            onClick={() => onDeleteReminder(rem._id)}
+                            title="Delete reminder"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        )}
+                      </div>
+
+                      {rem.instructions && (
+                        <p style={{ margin: 0, fontSize: '11px', color: 'var(--text-secondary, #a1a1aa)', fontStyle: 'italic' }}>
+                          "{rem.instructions}"
+                        </p>
+                      )}
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '4px', borderTop: '1px dashed var(--border-light, #27272a)' }}>
+                        <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
+                          Adherence: <strong>{totalTaken}</strong> doses logged
+                        </span>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          {isTakenToday ? (
+                            <span
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                fontSize: '11px',
+                                color: '#10b981',
+                                fontWeight: 600,
+                              }}
+                            >
+                              <CheckCircle2 size={13} /> Taken Today
+                            </span>
+                          ) : isSkippedToday ? (
+                            <span style={{ fontSize: '11px', color: '#f59e0b', fontWeight: 600 }}>
+                              Skipped
+                            </span>
+                          ) : (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => onRecordAdherence && onRecordAdherence(rem._id, 'taken')}
+                                style={{
+                                  background: 'rgba(16, 185, 129, 0.2)',
+                                  color: '#10b981',
+                                  border: '1px solid rgba(16, 185, 129, 0.4)',
+                                  borderRadius: '4px',
+                                  padding: '3px 8px',
+                                  fontSize: '11px',
+                                  fontWeight: 600,
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                }}
+                                title="Mark dose taken"
+                              >
+                                <Check size={12} /> Take
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => onRecordAdherence && onRecordAdherence(rem._id, 'skipped')}
+                                style={{
+                                  background: 'transparent',
+                                  color: 'var(--text-muted)',
+                                  border: '1px solid var(--border-light, #3f3f46)',
+                                  borderRadius: '4px',
+                                  padding: '3px 8px',
+                                  fontSize: '11px',
+                                  cursor: 'pointer',
+                                }}
+                                title="Mark dose skipped"
+                              >
+                                Skip
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+
+          {/* Upcoming Doctor Appointments Card */}
+          <div className="routines-checklist-card" style={{ marginTop: '20px' }}>
+            <div className="routines-header">
+              <div className="routines-title-group">
+                <div className="routines-icon-box" style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' }}>
+                  <Calendar size={18} />
+                </div>
+                <div>
+                  <h2 className="routines-heading">Doctor Appointments</h2>
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                    Upcoming Consultations
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="add-routine-btn"
+                onClick={() => onOpenAddReminder && onOpenAddReminder('appointment')}
+                title="Schedule new appointment alert"
+              >
+                <Plus size={15} />
+                <span>Add</span>
+              </button>
+            </div>
+
+            <div className="routines-list" style={{ marginTop: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {appointmentReminders.length === 0 ? (
+                <p className="no-routines-msg">No upcoming doctor appointments scheduled.</p>
+              ) : (
+                appointmentReminders.map((app) => {
+                  const dateFormatted = app.appointmentDate
+                    ? new Date(app.appointmentDate).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })
+                    : 'Upcoming';
+
+                  return (
+                    <div
+                      key={app._id}
+                      style={{
+                        padding: '12px',
+                        background: 'rgba(255, 255, 255, 0.02)',
+                        border: '1px solid var(--border-light, #27272a)',
+                        borderRadius: '8px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '6px',
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <div>
+                          <span style={{ fontWeight: 600, fontSize: '13px', color: 'var(--text-main, #fff)' }}>
+                            {app.title}
+                          </span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#60a5fa', marginTop: '2px' }}>
+                            <Stethoscope size={12} />
+                            <span>{app.doctorName || 'Specialist'} {app.specialty ? `(${app.specialty})` : ''}</span>
+                          </div>
+                        </div>
+
+                        {onDeleteReminder && (
+                          <button
+                            type="button"
+                            className="routine-delete-btn"
+                            onClick={() => onDeleteReminder(app._id)}
+                            title="Delete appointment reminder"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        )}
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: 'var(--text-muted)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <Calendar size={12} />
+                          <span>{dateFormatted}</span>
+                        </div>
+                        {app.appointmentTime && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <Clock size={12} />
+                            <span>{app.appointmentTime}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {app.facility && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: 'var(--text-secondary, #a1a1aa)' }}>
+                          <Building size={12} />
+                          <span>{app.facility} {app.location ? `• ${app.location}` : ''}</span>
+                        </div>
+                      )}
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '4px', borderTop: '1px dashed var(--border-light, #27272a)' }}>
+                        <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
+                          Alert: {app.reminderLeadTime ? app.reminderLeadTime.replace(/_/g, ' ') : '1 day before'}
+                        </span>
+                        <span
+                          style={{
+                            fontSize: '10px',
+                            padding: '1px 6px',
+                            background: 'rgba(59, 130, 246, 0.15)',
+                            color: '#60a5fa',
+                            borderRadius: '4px',
+                            fontWeight: 600,
+                          }}
+                        >
+                          Confirmed
+                        </span>
+                      </div>
                     </div>
                   );
                 })

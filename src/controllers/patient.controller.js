@@ -2,6 +2,7 @@ import Patient from '../models/Patient.js';
 import MedicalRecord from '../models/MedicalRecord.js';
 import Prescription from '../models/Prescription.js';
 import Routine from '../models/Routine.js';
+import Reminder from '../models/Reminder.js';
 import { asyncHandler, HttpError } from '../utils/asyncHandler.js';
 import { canAccessPatient } from '../middleware/auth.js';
 import { logAudit } from '../services/audit.service.js';
@@ -21,12 +22,13 @@ export const getPatientVault = asyncHandler(async (req, res) => {
   const patient = await Patient.findById(id).lean();
   if (!patient) throw new HttpError(404, 'Patient not found');
 
-  const [records, prescriptions, routines] = await Promise.all([
+  const [records, prescriptions, routines, reminders] = await Promise.all([
     MedicalRecord.find({ patient: id }).sort({ date: -1 }).lean(),
     Prescription.find({ patient: id }).populate('provider', 'name').sort({ issuedAt: -1 }).lean(),
     Routine.find({ patient: id }).sort({ createdAt: -1 }).lean(),
+    Reminder.find({ patient: id }).populate('prescription', 'medication dosage frequency').sort({ createdAt: -1 }).lean(),
   ]);
-  res.json({ patient, records, prescriptions, routines });
+  res.json({ patient, records, prescriptions, routines, reminders });
 });
 
 const PATIENT_EDITABLE = ['emergencyContact', 'allergies'];
