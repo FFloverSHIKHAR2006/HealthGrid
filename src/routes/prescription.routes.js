@@ -14,6 +14,7 @@ const createSchema = z.object({
   frequency: z.string().trim().max(100).optional(),
   duration: z.string().trim().max(100).optional(),
   instructions: z.string().trim().max(1000).optional(),
+  autoScheduleReminders: z.boolean().optional(),
 });
 
 router.post('/', authorize('provider'), validate({ body: createSchema }), createPrescription);

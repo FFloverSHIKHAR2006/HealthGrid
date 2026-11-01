@@ -49,6 +49,7 @@ export default function ProviderWorkspace({
     duration: '30 days',
     instructions: 'Take once daily after evening meal with water.',
   });
+  const [autoSchedule, setAutoSchedule] = useState(true);
   const [isSubmittingRx, setIsSubmittingRx] = useState(false);
   const [selectedRecordToView, setSelectedRecordToView] = useState(null);
 
@@ -86,6 +87,7 @@ export default function ProviderWorkspace({
     try {
       await onCreatePrescription({
         patient: selectedPatientId,
+        autoScheduleReminders: autoSchedule,
         ...prescriptionForm,
       });
       // Reset to defaults
@@ -642,6 +644,24 @@ export default function ProviderWorkspace({
                     required
                   />
                 </div>
+              </div>
+
+              {/* Auto-schedule Reminders Checkbox */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '4px 0 12px' }}>
+                <input
+                  type="checkbox"
+                  id="autoScheduleRx"
+                  checked={autoSchedule}
+                  onChange={(e) => setAutoSchedule(e.target.checked)}
+                  style={{ accentColor: '#10b981', width: '16px', height: '16px', cursor: 'pointer' }}
+                />
+                <label
+                  htmlFor="autoScheduleRx"
+                  style={{ fontSize: '13px', color: '#e4e4e7', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+                >
+                  <span>Auto-schedule patient medication reminders & notification center alerts</span>
+                  <span style={{ fontSize: '11px', color: '#10b981', fontWeight: 600 }}>(Recommended)</span>
+                </label>
               </div>
 
               {/* Submit & Sign Button */}

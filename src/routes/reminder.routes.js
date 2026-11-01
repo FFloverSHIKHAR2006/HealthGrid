@@ -6,6 +6,7 @@ import {
   updateReminder,
   deleteReminder,
   recordAdherence,
+  createRemindersFromPrescription,
 } from '../controllers/reminder.controller.js';
 import { authenticate } from '../middleware/auth.js';
 import { validate, idParam, objectId } from '../middleware/validate.js';
@@ -74,5 +75,10 @@ router.post('/', validate({ body: createSchema }), createReminder);
 router.put('/:id', validate({ params: idParam, body: updateSchema }), updateReminder);
 router.delete('/:id', validate({ params: idParam }), deleteReminder);
 router.post('/:id/adherence', validate({ params: idParam, body: adherenceSchema }), recordAdherence);
+router.post(
+  '/from-prescription/:prescriptionId',
+  validate({ params: z.object({ prescriptionId: objectId }) }),
+  createRemindersFromPrescription
+);
 
 export default router;

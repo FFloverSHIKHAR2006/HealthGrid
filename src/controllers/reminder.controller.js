@@ -1,5 +1,7 @@
 import Reminder from '../models/Reminder.js';
 import Patient from '../models/Patient.js';
+import Prescription from '../models/Prescription.js';
+import { scheduleRemindersForPrescription } from '../services/prescriptionScheduler.service.js';
 import { asyncHandler, HttpError } from '../utils/asyncHandler.js';
 import { canAccessPatient } from '../middleware/auth.js';
 import { logAudit } from '../services/audit.service.js';
@@ -131,4 +133,26 @@ export const recordAdherence = asyncHandler(async (req, res) => {
     reminder,
     adherence: entry,
   });
+});
+
+// Auto-schedule reminders from prescription
+export const createRemindersFromPrescription = asyncHandler(async (req, res) => {
+  const { prescriptionId } = req.params;
+  const prescription = await Prescription.findById(prescriptionId);
+  if (!prescription) throw new HttpError(404, 'Prescription not found');
+
+  if (!canAccessPatient(req.user, prescription.patient)) {
+    throw new HttpError(403, 'You do not have access to this prescription');
+  }
+
+  const result = await scheduleRemindersForPrescription(prescriptionId, req.user._id);
+
+  await logAudit(req, {
+    action: 'CREATE',
+    entity: 'Reminder',
+    entityId: prescription._id,
+    details: `Auto-scheduled reminders for ${prescription.medication}`,
+  });
+
+  res.status(201).json(result);
 });
